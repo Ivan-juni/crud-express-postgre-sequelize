@@ -1,6 +1,7 @@
 const Router = require('express')
 const router = new Router()
 const userController = require('../controllers/userController')
+const checkRole = require('../middleware/checkRole-middleware')
 const { body } = require('express-validator')
 
 router.post(
@@ -16,15 +17,15 @@ router.post(
   userController.login
 )
 router.post('/logout', userController.logout)
-router.get('/auth', userController.check)
+// router.get('/auth', userController.check)
 router.get('/refresh', userController.refresh)
 
 // get all users
-router.get('/', userController.getAll)
+router.get('/', checkRole('ADMIN'), userController.getAll)
 // get user by id
-router.get('/:id', userController.getOne)
+router.get('/:id', checkRole('ADMIN'), userController.getOne)
 // delete user by id
-router.delete('/:id', userController.deleteOne)
+router.delete('/:id', checkRole('ADMIN'), userController.deleteOne)
 
 // !todo change user password
 // router.put('/auth/changePassword', userController.changePassword)

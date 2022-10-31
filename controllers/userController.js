@@ -1,5 +1,4 @@
-const { User } = require('../models/models')
-const UserService = require('../service/user-service')
+const userService = require('../service/user-service')
 const { validationResult } = require('express-validator')
 const ApiError = require('../error/ApiError')
 
@@ -11,7 +10,7 @@ class UserController {
         return next(ApiError.badRequest('Ошибка при валидации'))
       }
       const { email, password, role } = req.body
-      const userData = await UserService.registration(email, password, role)
+      const userData = await userService.registration(email, password, role)
       res.cookie('refreshToken', userData.refreshToken, {
         maxAge: 30 * 24 * 60 * 60 * 1000,
         httpOnly: true,
@@ -24,32 +23,47 @@ class UserController {
   }
   async login(req, res, next) {
     try {
+      const { email, password } = req.body
+      const userData = await userService.login(email, password)
+      res.cookie('refreshToken', userData.refreshToken, {
+        maxAge: 30 * 24 * 60 * 60 * 1000,
+        httpOnly: true,
+      })
+
+      return res.json(userData)
     } catch (error) {
+      console.log(error)
       next(error)
     }
   }
   async logout(req, res, next) {
     try {
-    } catch (error) {
-      next(error)
-    }
-  }
-  async check(req, res, next) {
-    try {
+      const { refreshToken } = req.cookies
+      const token = await userService.logout(refreshToken)
+      res.clearCookie('refreshToken')
+      return res.json(token)
     } catch (error) {
       next(error)
     }
   }
   async refresh(req, res, next) {
     try {
+      const { refreshToken } = req.cookies
+
+      const userData = await userService.refresh(refreshToken)
+      res.cookie('refreshToken', userData.refreshToken, {
+        maxAge: 30 * 24 * 60 * 60 * 1000,
+        httpOnly: true,
+      })
+
+      return res.json(userData)
     } catch (error) {
       next(error)
     }
   }
-  // async changePassword(req, res, next) {}
   async getAll(req, res, next) {
     try {
-      const users = await User.findAll()
+      const users = await userService.getAllUsers()
       return res.json(users)
     } catch (error) {
       return next(error)
@@ -61,7 +75,7 @@ class UserController {
       if (!id) {
         next(ApiError.badRequest("User id wasn't typed"))
       }
-      const users = await User.findOne({ where: { id: id } })
+      const users = await userService.getOneUser(id)
       return res.json(users)
     } catch (error) {
       return next(error)
@@ -73,11 +87,7 @@ class UserController {
       if (!id) {
         next(ApiError.badRequest("User id wasn't typed"))
       }
-      const users = await await await User.destroy({
-        where: {
-          id: id,
-        },
-      })
+      const users = await userService.deleteUser(id)
       return res.json(users)
     } catch (error) {
       return next(error)

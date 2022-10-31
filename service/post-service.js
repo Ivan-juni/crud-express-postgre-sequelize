@@ -2,36 +2,30 @@ const ApiError = require('../error/ApiError')
 const { Post } = require('../models/models')
 
 class PostService {
-  async createPost(title, content, id) {
-    if (!id) {
-      throw ApiError.badRequest(`Введите id пользователя`)
-    }
+  async createPost(title, content, userId) {
     const newPost = await Post.create({
       title: title,
       content: content,
-      id: id,
+      userId,
     })
-    res.json(newPost)
+    return newPost
   }
-  async getPostsByUser(postId) {
-    if (!postId) {
-      throw ApiError.badRequest(`Введите id пользователя`)
-    }
-    const posts = await Post.findAll({ where: { id: postId } })
+  async getPostsByUser(userId) {
+    const posts = await Post.findAll({ where: { userId } })
 
-    res.json(posts)
+    return posts
   }
-  async deletePosts(postId) {
-    if (!postId) {
-      throw ApiError.badRequest(`Введите id пользователя`)
+  async deletePosts(userId) {
+    if (!userId) {
+      throw ApiError.badRequest(`Incorrect user id`)
     }
     const posts = await Post.destroy({
       where: {
-        id: postId,
+        userId,
       },
     })
 
-    res.json(posts)
+    return posts
   }
   async deletePost(postId, userId) {
     if (!userId) {
@@ -42,11 +36,12 @@ class PostService {
     }
     const posts = await Post.destroy({
       where: {
-        id: userId,
+        id: postId,
+        userId,
       },
     })
 
-    res.json(posts)
+    return posts
   }
 }
 

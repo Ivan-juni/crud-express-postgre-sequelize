@@ -1,18 +1,15 @@
 const ApiError = require('../error/ApiError')
-const { Post } = require('../models/models')
+const postService = require('../service/post-service')
 
 class PostController {
-  async createPost(req, res, next) {
+  async addPost(req, res, next) {
     try {
-      const { title, content, id } = req.body
+      const { title, content } = req.body
+      const { id } = req.user
       if (!id) {
-        next(ApiError.badRequest("User id wasn't typed"))
+        next(ApiError.badRequest('Incorrect user id'))
       }
-      const newPost = await Post.create({
-        title: title,
-        content: content,
-        id: id,
-      })
+      const newPost = await postService.createPost(title, content, id)
       res.json(newPost)
     } catch (error) {
       next(error)
@@ -20,11 +17,11 @@ class PostController {
   }
   async getPostsByUser(req, res, next) {
     try {
-      const { id } = req.params
+      const { id } = req.user
       if (!id) {
-        next(ApiError.badRequest("User id wasn't typed"))
+        next(ApiError.badRequest('Incorrect user id'))
       }
-      const posts = await Post.findAll({ where: { id: id } })
+      const posts = await postService.getPostsByUser(id)
 
       res.json(posts)
     } catch (error) {
@@ -33,15 +30,11 @@ class PostController {
   }
   async deletePosts(req, res, next) {
     try {
-      const { id } = req.params
+      const { id } = req.user
       if (!id) {
-        next(ApiError.badRequest("User id wasn't typed"))
+        next(ApiError.badRequest('Incorrect user id'))
       }
-      const posts = await Post.destroy({
-        where: {
-          id: id,
-        },
-      })
+      const posts = await postService.deletePosts(id)
 
       res.json(posts)
     } catch (error) {
@@ -50,18 +43,15 @@ class PostController {
   }
   async deletePost(req, res, next) {
     try {
-      const { postId, userId } = req.params
+      const { postId } = req.params
+      const userId = req.user.id
       if (!userId) {
-        next(ApiError.badRequest("User id wasn't typed"))
+        next(ApiError.badRequest('Incorrect user id'))
       }
       if (!postId) {
-        next(ApiError.badRequest("Post id wasn't typed"))
+        next(ApiError.badRequest('Incorrect post id'))
       }
-      const posts = await Post.destroy({
-        where: {
-          id: userId,
-        },
-      })
+      const posts = await postService.deletePost(postId, userId)
 
       res.json(posts)
     } catch (error) {
